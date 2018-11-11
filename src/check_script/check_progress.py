@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # 命令前缀拼接设置
 host_type = platform.platform()
-SCRIPTS_NAME=os.basename(os.path.realpath(__file__))
+SCRIPTS_NAME=os.path.basename(os.path.realpath(__file__))
 
 def get_host_ip():
     '''
