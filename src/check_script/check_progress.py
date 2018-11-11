@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # 命令前缀拼接设置
 host_type = platform.platform()
+SCRIPTS_NAME=os.basename(os.path.realpath(__file__))
 
 def get_host_ip():
     '''
@@ -32,6 +33,8 @@ def get_host_ip():
 local_host_ip = get_host_ip()
 
 class BaseCheck(object):
+    cmd_fail_info = "[%s] 命令未成功执行，命令执行返回状态为[%s]，输出结果为[%s]"
+
     @staticmethod
     def _runCmd(cmd):
         '''
@@ -57,7 +60,7 @@ class BaseCheck(object):
         '''
         arg, infos = output
         outputInfo = infos[1]
-        outputInfo = [info for info in outputInfo.split(os.linesep) if port in outputInfo]
+        outputInfo = [info for info in outputInfo.split(os.linesep) if arg in outputInfo]
         self._checkans((arg, outputInfo))
 
     def _checkans(self,output):
@@ -71,16 +74,18 @@ class BaseCheck(object):
             self.outputs[arg] = output
             status,out = output
             if  status != 0:
-                logger.warning("[%s] 命令未成功执行，命令执行返回状态为[%s]，输出结果为[%s]", cmd, status, out)
+                logger.warning(ProgressCheck.cmd_fail_info, cmd, status, out)
             else:
                 self.checkCmdAns((arg,output))
 
 class ProgressCheck(BaseCheck):
     def __init__(self,args):
         super(ProgressCheck,self).__init__(args)
-        ps_cmd_prefix = {'Linux': 'ps -ef | grep -v grep | grep ',
-                         'HP-UX': 'ps -efx | grep -v grep | grep ',
-                         'AIX': 'ps -ef | grep -v grep| grep '}
+        ps_linux_prefix = "ps -ef | grep -v grep | grep -v " + SCRIPTS_NAME +" | grep "
+        ps_hpux_prefix = "ps -exf | grep -v grep | grep -v " + SCRIPTS_NAME + " | grep "
+        ps_cmd_prefix = {'Linux': ps_linux_prefix,
+                         'HP-UX': ps_hpux_prefix,
+                         'AIX': ps_linux_prefix}
         self._os_ps_prefix = ps_cmd_prefix.get(host_type, ps_cmd_prefix.get("Linux"))
 
     def gengrateCheckCmd(self):
