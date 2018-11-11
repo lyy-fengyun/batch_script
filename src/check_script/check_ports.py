@@ -37,6 +37,9 @@ def get_host_ip():
 local_host_ip = get_host_ip()
 
 class BaseCheck(object):
+    '''
+    run command and check the command output
+    '''
     cmd_fail_info = "[%s] 命令未成功执行，命令执行返回状态为[%s]，输出结果为[%s]"
     @staticmethod
     def _runCmd(cmd):
@@ -53,6 +56,10 @@ class BaseCheck(object):
         self.outputs = {}
 
     def gengrateCheckCmd(self):
+        '''
+        generate shell command
+        :return:
+        '''
         pass
 
     def checkCmdAns(self,output):
