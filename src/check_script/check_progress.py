@@ -89,14 +89,20 @@ class ProgressCheck(BaseCheck):
         self._os_ps_prefix = ps_cmd_prefix.get(host_type, ps_cmd_prefix.get("Linux"))
 
     def gengrateCheckCmd(self):
-        cmd = [self._os_ps_prefix+ arg +" | wc -l" for arg in self.args]
+        cmd = [self._os_ps_prefix+ arg for arg in self.args]
         self.cmds = dict(zip(self.args,cmd))
 
     def _checkans(self,output):
+        '''
+        对进程检查的输出内容进行判断
+        :param output:
+        :return:
+        '''
         app_name, outputInfo = output
-        if 1 == len(output):
+        outputInfo = outputInfo.rstrip()
+        if 1 == len(outputInfo):
             logger.info("%s 进程存在.", app_name)
-        elif 0 == len(output):
+        elif 0 == len(outputInfo):
             logger.warning("%s 应用进程不存在!", app_name)
         else:
             logger.info("%s 应用匹配到[%s]个进程,信息如下[%s]",app_name,len(output),output)
