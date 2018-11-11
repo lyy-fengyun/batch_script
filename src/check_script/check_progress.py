@@ -89,7 +89,7 @@ class ProgressCheck(BaseCheck):
         self._os_ps_prefix = ps_cmd_prefix.get(host_type, ps_cmd_prefix.get("Linux"))
 
     def gengrateCheckCmd(self):
-        cmd = [self._os_ps_prefix+arg for arg in self.args]
+        cmd = [self._os_ps_prefix+ arg +" | wc -l" for arg in self.args]
         self.cmds = dict(zip(self.args,cmd))
 
     def _checkans(self,output):
