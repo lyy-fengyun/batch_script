@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # 命令前缀拼接设置
 host_type = platform.platform()
+SCRIPTS_NAME=os.basename(os.path.realpath(__file__))
 
 def get_host_ip():
     '''
@@ -80,9 +81,11 @@ class BaseCheck(object):
 class ProgressCheck(BaseCheck):
     def __init__(self,args):
         super(ProgressCheck,self).__init__(args)
-        ps_cmd_prefix = {'Linux': 'ps -ef | grep -v grep | grep ',
-                         'HP-UX': 'ps -efx | grep -v grep | grep ',
-                         'AIX': 'ps -ef | grep -v grep| grep '}
+        ps_linux_prefix = "ps -ef | grep -v grep | grep -v " + SCRIPTS_NAME +" | grep "
+        ps_hpux_prefix = "ps -exf | grep -v grep | grep -v " + SCRIPTS_NAME + " | grep "
+        ps_cmd_prefix = {'Linux': ps_linux_prefix,
+                         'HP-UX': ps_hpux_prefix,
+                         'AIX': ps_linux_prefix}
         self._os_ps_prefix = ps_cmd_prefix.get(host_type, ps_cmd_prefix.get("Linux"))
 
     def gengrateCheckCmd(self):
