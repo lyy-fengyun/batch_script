@@ -37,10 +37,8 @@ def get_host_ip():
 local_host_ip = get_host_ip()
 
 class BaseCheck(object):
-    '''
-    run command and check the command output
-    '''
     cmd_fail_info = "[%s] 命令未成功执行，命令执行返回状态为[%s]，输出结果为[%s]"
+
     @staticmethod
     def _runCmd(cmd):
         '''
@@ -62,36 +60,35 @@ class BaseCheck(object):
         '''
         pass
 
-    def checkCmdAns(self,output):
+    def checkCmdAns(self,arg,output):
         '''
         检查命令执行结果
         :param info: (): arg, cmd_returninfo:(status,output)
         :return:
         '''
-        arg, infos = output
-        outputInfo = infos[1]
-        outputInfo = [info for info in outputInfo.split(os.linesep) if port in outputInfo]
-        self._checkans((arg,outputInfo))
+        status, infos = output
+        logger.debug("output is [%s]",infos)
+        outputInfo = [info for info in infos.split(os.linesep) if arg in info]
+        self._checkans(arg,output)
 
-    def _checkans(self,output):
-        '''
-        子类要实现的方法
-        :param output: (arg,(status,output))
-        :return:
-        '''
+    def _checkans(self,arg,output):
         pass
 
     def runCmd(self):
+        '''
+        execute all command generate orcoding to given args
+        :return:
+        '''
         self.gengrateCheckCmd()
         for arg in self.args:
             cmd  = self.cmds.get(arg)
             output = self._runCmd(cmd)
             self.outputs[arg] = output
             status,out = output
-            if  status != 0:
-                logger.warning(BaseCheck.cmd_fail_info, cmd, status, out)
-            else:
-                self.checkCmdAns((arg,output))
+            # if  status != 0:
+            #     logger.warning(ProgressCheck.cmd_fail_info, cmd, status, out)
+            # else:
+            self.checkCmdAns(arg, output)
 
 class PortsCheck(BaseCheck):
     global local_host_ip
@@ -119,8 +116,9 @@ class PortsCheck(BaseCheck):
         cmd = [self._os_port_prefix.format(arg) for arg in self.args]
         self.cmds = dict(zip(self.args,cmd))
 
-    def _checkans(self,output):
-        port, outputInfo = output
+    def _checkans(self,arg,output):
+        port = arg
+        status, outputInfo = output
         if 0 == len(output):
             logger.warning(PortsCheck.abnormal_info, port)
         else:
