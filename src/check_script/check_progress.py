@@ -11,6 +11,7 @@ import unittest
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+logging_formatter = ""
 # 命令前缀拼接设置
 host_type = platform.platform()
 SCRIPTS_NAME=os.path.basename(os.path.realpath(__file__))
@@ -50,33 +51,41 @@ class BaseCheck(object):
         self.outputs = {}
 
     def gengrateCheckCmd(self):
+        '''
+        generate shell command
+        :return:
+        '''
         pass
 
-    def checkCmdAns(self,output):
+    def checkCmdAns(self,arg,output):
         '''
         检查命令执行结果
         :param info: (): arg, cmd_returninfo:(status,output)
         :return:
         '''
-        arg, infos = output
-        outputInfo = infos[1]
-        outputInfo = [info for info in outputInfo.split(os.linesep) if arg in outputInfo]
-        self._checkans((arg, outputInfo))
+        status, infos = output
+        logger.debug("output is [%s]",infos)
+        outputInfo = [info for info in infos.split(os.linesep) if arg in info]
+        self._checkans(arg,output)
 
-    def _checkans(self,output):
+    def _checkans(self,arg,output):
         pass
 
     def runCmd(self):
+        '''
+        execute all command generate orcoding to given args
+        :return:
+        '''
         self.gengrateCheckCmd()
         for arg in self.args:
             cmd  = self.cmds.get(arg)
             output = self._runCmd(cmd)
             self.outputs[arg] = output
             status,out = output
-            if  status != 0:
-                logger.warning(ProgressCheck.cmd_fail_info, cmd, status, out)
-            else:
-                self.checkCmdAns((arg,output))
+            # if  status != 0:
+            #     logger.warning(ProgressCheck.cmd_fail_info, cmd, status, out)
+            # else:
+            self.checkCmdAns(arg, output)
 
 class ProgressCheck(BaseCheck):
     def __init__(self,args):
@@ -91,21 +100,22 @@ class ProgressCheck(BaseCheck):
     def gengrateCheckCmd(self):
         cmd = [self._os_ps_prefix+ arg for arg in self.args]
         self.cmds = dict(zip(self.args,cmd))
+        logger.debug("generate commands is [%s]", self.cmds)
 
-    def _checkans(self,output):
+    def _checkans(self,arg,output):
         '''
         对进程检查的输出内容进行判断
         :param output:
         :return:
         '''
-        app_name, outputInfo = output
-        outputInfo = outputInfo.rstrip()
+        cmd_exit_code, outputInfo = output
+        logger.debug("command exit code is [%s], it's output is [%s]",cmd_exit_code,outputInfo)
         if 1 == len(outputInfo):
-            logger.info("%s 进程存在.", app_name)
+            logger.info("[%s] 进程存在.", arg)
         elif 0 == len(outputInfo):
-            logger.warning("%s 应用进程不存在!", app_name)
+            logger.warning("[%s] 应用进程不存在!", arg)
         else:
-            logger.info("%s 应用匹配到[%s]个进程,信息如下[%s]",app_name,len(output),output)
+            logger.warning("[%s] 应用匹配到[%s]个进程,信息如下[%s]",arg,len(outputInfo),output)
 
 class progress_check(unittest.TestCase):
     def setUp(self):
